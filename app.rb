@@ -1,5 +1,4 @@
 require 'sinatra'
-require 'ap'
 require "open-uri"
 require 'logger'
 
@@ -10,8 +9,12 @@ VENDOR_URL = "https://s3-external-1.amazonaws.com/"
 
 get '/:buildpack/*.tgz' do
   buildpack = params[:buildpack]
-  file_path = params[:captures][1]
+  file_path = params[:splat].first
   send_file get_file(buildpack, file_path)
+end
+
+get '/' do
+  "OK"
 end
 
 def get_file(buildpack, file_path)
@@ -27,7 +30,7 @@ def get_file(buildpack, file_path)
   absolute_dir_path = DOWNLOAD_DIR + buildpack + "/" + dir
   absolute_file_path = absolute_dir_path + "/#{file_name}"
 
-  if File.exists?(absolute_file_path)
+  if File.exists?(absolute_file_path) && File.size(absolute_file_path) > 0
     return absolute_file_path
   else
     logger.info "NO FILE - DOWNLOAD"
@@ -41,8 +44,5 @@ end
 def download_file(local_path, remote_url)
   logger.info "DOWNLOADING FILE"
   logger.info remote_url
-  File.open(local_path, "w") do |f|
-    IO.copy_stream(open(remote_url), f)
-  end
-
+  `wget -O #{local_path} #{remote_url}`
 end

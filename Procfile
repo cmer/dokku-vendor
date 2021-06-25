@@ -1,0 +1,1 @@
+web: bundle exec puma -t 1:10 -p ${PORT:-5000} -e ${RACK_ENV:-production}

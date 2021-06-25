@@ -1,6 +1,6 @@
 # Dokku Vendor Server
 
-A simple sinatra app that acts like `BUILDPACK_VENDOR_URL` and downloads requested file to local and serves the file for dokku deploys. Like ruby binaries, bundler etc.
+A simple Sinatra app that acts like `BUILDPACK_VENDOR_URL` and caches files locally to speed up Dokku deploys.
 
 Blog post: https://medium.com/@mbrain0/how-to-speed-up-dokku-deployments-cc2f42015e55
 
@@ -46,7 +46,7 @@ dokku config:set my-rails-app --no-restart BUILDPACK_VENDOR_URL=SERVER-IP:PORT/h
 
 # Restricting external access(optional)
 
-You can restrict access from outside of the server by following below. We need to create a nginx config for dokku-vendor app to restrict all IPs except docker subnet(`172.17.0.0/16`) 
+You can restrict access from outside of the server by following below. We need to create a nginx config for dokku-vendor app to restrict all IPs except docker subnet(`172.17.0.0/16`)
 
 ```bash
 #server
