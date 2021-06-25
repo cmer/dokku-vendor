@@ -1,6 +1,6 @@
 require 'sinatra'
-require "open-uri"
 require 'logger'
+require 'down'
 
 set :logger, Logger.new(STDOUT)
 
@@ -10,7 +10,12 @@ VENDOR_URL = "https://s3-external-1.amazonaws.com/"
 get '/:buildpack/*.tgz' do
   buildpack = params[:buildpack]
   file_path = params[:splat].first
-  send_file get_file(buildpack, file_path)
+  file = get_file(buildpack, file_path)
+  if file.is_a?(Integer)
+    halt(file)
+  else
+    send_file(file)
+  end
 end
 
 get '/' do
@@ -36,13 +41,27 @@ def get_file(buildpack, file_path)
     logger.info "NO FILE - DOWNLOAD"
     FileUtils.mkdir_p  absolute_dir_path unless File.exists?(absolute_dir_path) # Create dir first
     remote_url = VENDOR_URL + "#{buildpack}/#{file_path}.tgz"
-    download_file(absolute_file_path, remote_url)
-    get_file(buildpack, file_path)
+
+    download = download_file(absolute_file_path, remote_url)
+
+    if download == true
+      return absolute_file_path
+    else
+      return download # error code
+    end
   end
 end
 
 def download_file(local_path, remote_url)
   logger.info "DOWNLOADING FILE"
   logger.info remote_url
-  `wget -O #{local_path} #{remote_url}`
+  Down.download(remote_url, destination: local_path)
+  true
+rescue Down::TooManyRedirects, Down::ConnectionError => ex
+  logger.info ex.message
+  404
+rescue Down::Error => ex
+  logger.info ex.message
+  code = ex.message.to_i
+  code > 0 ? code : 500
 end
